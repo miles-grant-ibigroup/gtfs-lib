@@ -1,22 +1,6 @@
 package com.conveyal.gtfs.loader;
 
-import com.conveyal.gtfs.model.Agency;
-import com.conveyal.gtfs.model.BookingRule;
-import com.conveyal.gtfs.model.Calendar;
-import com.conveyal.gtfs.model.CalendarDate;
-import com.conveyal.gtfs.model.Entity;
-import com.conveyal.gtfs.model.FareAttribute;
-import com.conveyal.gtfs.model.Frequency;
-import com.conveyal.gtfs.model.LocationGroup;
-import com.conveyal.gtfs.model.LocationMetaData;
-import com.conveyal.gtfs.model.LocationShape;
-import com.conveyal.gtfs.model.PatternStop;
-import com.conveyal.gtfs.model.Route;
-import com.conveyal.gtfs.model.ScheduleException;
-import com.conveyal.gtfs.model.ShapePoint;
-import com.conveyal.gtfs.model.Stop;
-import com.conveyal.gtfs.model.StopTime;
-import com.conveyal.gtfs.model.Trip;
+import com.conveyal.gtfs.model.*;
 import gnu.trove.map.TObjectIntMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -239,6 +223,15 @@ public interface EntityPopulator<T> {
         bookingRule.info_url = getUrlIfPresent(result, "info_url", columnForName);
         bookingRule.booking_url = getUrlIfPresent(result, "booking_url", columnForName);
         return bookingRule;
+    };
+
+    EntityPopulator<Location> LOCATION = (result, columnForName) -> {
+        Location location = new Location();
+        location.location_id = getStringIfPresent(result, "location_id", columnForName);
+        location.location_stop_name = getStringIfPresent(result, "location_stop_name", columnForName);
+        location.zone_id = getStringIfPresent(result, "zone_id", columnForName);
+        location.location_stop_url = getUrlIfPresent(result, "location_stop_url", columnForName);
+        return location;
     };
 
     EntityPopulator<LocationGroup> LOCATION_GROUP = (result, columnForName) -> {

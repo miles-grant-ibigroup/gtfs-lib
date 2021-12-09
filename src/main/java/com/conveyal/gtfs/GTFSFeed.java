@@ -5,6 +5,7 @@ import com.conveyal.gtfs.loader.FeedLoadResult;
 import com.conveyal.gtfs.loader.JdbcGTFSFeedConverter;
 import com.conveyal.gtfs.model.*;
 import com.conveyal.gtfs.model.Calendar;
+import com.conveyal.gtfs.model.Location;
 import com.conveyal.gtfs.validator.Validator;
 import com.conveyal.gtfs.util.Util;
 import com.conveyal.gtfs.validator.service.GeoUtils;
@@ -59,6 +60,7 @@ public class GTFSFeed implements Cloneable, Closeable {
     /* Some of these should be multimaps since they don't have an obvious unique key. */
     public final Map<String, Agency> agency;
     public final Map<String, BookingRule> bookingRules;
+    public final Map<String, Location> locations;
     public final Map<String, LocationGroup> locationGroups;
     public final Map<String, LocationMetaData> locationMetaData;
     public final Map<String, LocationShape> locationShapes;
@@ -168,6 +170,7 @@ public class GTFSFeed implements Cloneable, Closeable {
         this.services.putAll(serviceTable);
         serviceTable = null; // free memory
         new BookingRule.Loader(this).loadTable(zip);
+        new Location.Loader(this).loadTable(zip);
 
         // Same deal
         Map<String, Fare> fares = new HashMap<>();
@@ -213,6 +216,7 @@ public class GTFSFeed implements Cloneable, Closeable {
 
             new Agency.Writer(this).writeTable(zip);
             new BookingRule.Writer(this).writeTable(zip);
+            new Location.Writer(this).writeTable(zip);
             new Calendar.Writer(this).writeTable(zip);
             new CalendarDate.Writer(this).writeTable(zip);
             new FareAttribute.Writer(this).writeTable(zip);
@@ -651,6 +655,7 @@ public class GTFSFeed implements Cloneable, Closeable {
         calenders = db.getTreeMap("calenders");
         // TODO: I think this needs to come after calenders for ref checks.
         bookingRules = db.getTreeMap("booking_rules");
+        locations = db.getTreeMap("locations");
         locationGroups = db.getTreeMap("location_groups");
         locationMetaData = db.getTreeMap("location_meta_data");
         locationShapes = db.getTreeMap("location_shapes");

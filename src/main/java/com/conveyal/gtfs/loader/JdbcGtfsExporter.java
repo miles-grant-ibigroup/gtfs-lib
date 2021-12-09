@@ -86,6 +86,7 @@ public class JdbcGtfsExporter {
             result.agency = export(Table.AGENCY, connection);
             // TODO: No idea if booking rules and location groups need to have a 'fromEditor' option?
             result.bookingRules = export(Table.BOOKING_RULES, connection);
+            result.locations = export(Table.LOCATIONS, connection);
             result.locationGroups = export(Table.LOCATION_GROUPS, connection);
             if (fromEditor) {
                 // only export calendar entries that have at least one day of service set

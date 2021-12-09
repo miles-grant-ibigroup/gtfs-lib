@@ -9,29 +9,7 @@ import com.conveyal.gtfs.loader.conditions.FieldIsEmptyCheck;
 import com.conveyal.gtfs.loader.conditions.FieldNotEmptyAndMatchesValueCheck;
 import com.conveyal.gtfs.loader.conditions.ForeignRefExistsCheck;
 import com.conveyal.gtfs.loader.conditions.ReferenceFieldShouldBeProvidedCheck;
-import com.conveyal.gtfs.model.Agency;
-import com.conveyal.gtfs.model.Attribution;
-import com.conveyal.gtfs.model.BookingRule;
-import com.conveyal.gtfs.model.Calendar;
-import com.conveyal.gtfs.model.CalendarDate;
-import com.conveyal.gtfs.model.Entity;
-import com.conveyal.gtfs.model.FareAttribute;
-import com.conveyal.gtfs.model.FareRule;
-import com.conveyal.gtfs.model.FeedInfo;
-import com.conveyal.gtfs.model.Frequency;
-import com.conveyal.gtfs.model.LocationGroup;
-import com.conveyal.gtfs.model.LocationMetaData;
-import com.conveyal.gtfs.model.LocationShape;
-import com.conveyal.gtfs.model.Pattern;
-import com.conveyal.gtfs.model.PatternStop;
-import com.conveyal.gtfs.model.Route;
-import com.conveyal.gtfs.model.ScheduleException;
-import com.conveyal.gtfs.model.ShapePoint;
-import com.conveyal.gtfs.model.Stop;
-import com.conveyal.gtfs.model.StopTime;
-import com.conveyal.gtfs.model.Transfer;
-import com.conveyal.gtfs.model.Translation;
-import com.conveyal.gtfs.model.Trip;
+import com.conveyal.gtfs.model.*;
 import com.conveyal.gtfs.storage.StorageException;
 import com.conveyal.gtfs.util.GeoJsonUtil;
 import com.csvreader.CsvReader;
@@ -442,6 +420,13 @@ public class Table {
             new URLField("booking_url", OPTIONAL)
     );
 
+    public static final Table LOCATIONS = new Table("locations", Location.class, OPTIONAL,
+            new StringField("location_id", REQUIRED),
+            new StringField("location_stop_name", OPTIONAL),
+            new StringField("zone_id", OPTIONAL),
+            new URLField("location_stop_url", OPTIONAL)
+    );
+
     // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#location_groupstxt-file-added
     public static final Table LOCATION_GROUPS = new Table("location_groups", LocationGroup.class, OPTIONAL,
             new StringField("location_group_id", REQUIRED),
@@ -489,6 +474,7 @@ public class Table {
         TRANSLATIONS,
         ATTRIBUTIONS,
         BOOKING_RULES,
+        LOCATIONS,
         LOCATION_GROUPS
     };
 
