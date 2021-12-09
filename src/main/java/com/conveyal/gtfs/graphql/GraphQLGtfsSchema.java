@@ -94,6 +94,15 @@ public class GraphQLGtfsSchema {
             .field(MapFetcher.field("booking_url"))
             .build();
 
+    // Represents rows from locations.geoJSON (hack to allow saving for UI dev)
+    public static final GraphQLObjectType locationsType = newObject().name("locations")
+            .description("A GTFS locations object")
+            .field(MapFetcher.field("id", GraphQLInt))
+            .field(MapFetcher.field("location_id"))
+            .field(MapFetcher.field("location_stop_name"))
+            .field(MapFetcher.field("zone_id"))
+            .build();
+
     // Represents rows from calendar.txt
     public static final GraphQLObjectType calendarType = newObject()
             .name("calendar")
@@ -459,6 +468,8 @@ public class GraphQLGtfsSchema {
                     // with the entire set -- fares -> fare rules, trips -> stop times, patterns -> pattern stops/shapes)
                     .argument(intArg(LIMIT_ARG))
                     .dataFetcher(new JDBCFetcher("stop_times", "stop_id", "stop_sequence", false)))
+            // Flex locations location_group
+
             .build();
 
     /**
@@ -755,6 +766,17 @@ public class GraphQLGtfsSchema {
                     .argument(intArg(LIMIT_ARG))
                     .argument(intArg(OFFSET_ARG))
                     .dataFetcher(new JDBCFetcher(Table.BOOKING_RULES.name))
+                    .build()
+            )
+            .field(newFieldDefinition()
+                    .name("locations")
+                    .type(new GraphQLList(GraphQLGtfsSchema.locationsType))
+                    .argument(stringArg("namespace")) // FIXME maybe these nested namespace arguments are not doing anything.
+                    .argument(multiStringArg("location_id"))
+                    .argument(intArg(ID_ARG))
+                    .argument(intArg(LIMIT_ARG))
+                    .argument(intArg(OFFSET_ARG))
+                    .dataFetcher(new JDBCFetcher(Table.LOCATIONS.name))
                     .build()
             )
             .field(newFieldDefinition()
