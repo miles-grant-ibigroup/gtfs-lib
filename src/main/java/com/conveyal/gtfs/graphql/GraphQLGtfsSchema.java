@@ -471,6 +471,8 @@ public class GraphQLGtfsSchema {
             .field(MapFetcher.field("id", GraphQLInt))
             .field(MapFetcher.field("pattern_id"))
             .field(MapFetcher.field("stop_id"))
+            .field(MapFetcher.field("drop_off_booking_rule_id"))
+            .field(MapFetcher.field("pickup_booking_rule_id"))
             .field(MapFetcher.field("default_travel_time", GraphQLInt))
             .field(MapFetcher.field("default_dwell_time", GraphQLInt))
             .field(MapFetcher.field("shape_dist_traveled", GraphQLFloat))
