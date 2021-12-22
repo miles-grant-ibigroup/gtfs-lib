@@ -24,6 +24,7 @@ import com.conveyal.gtfs.model.LocationGroup;
 import com.conveyal.gtfs.model.LocationMetaData;
 import com.conveyal.gtfs.model.LocationShape;
 import com.conveyal.gtfs.model.Pattern;
+import com.conveyal.gtfs.model.PatternLocation;
 import com.conveyal.gtfs.model.PatternStop;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.ScheduleException;
@@ -281,6 +282,70 @@ public class Table {
     .restrictDelete()
     .addPrimaryKey();
 
+    // FLEX Tables
+
+    // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#gtfs-bookingrules
+    public static final Table BOOKING_RULES = new Table("booking_rules", BookingRule.class, OPTIONAL,
+            new StringField("booking_rule_id", REQUIRED),
+            new ShortField("booking_type", OPTIONAL, 2),
+            new IntegerField("prior_notice_duration_min", OPTIONAL),
+            new IntegerField("prior_notice_duration_max", OPTIONAL),
+            new IntegerField("prior_notice_last_day", OPTIONAL),
+            new TimeField("prior_notice_last_time", OPTIONAL),
+            new IntegerField("prior_notice_start_day", OPTIONAL),
+            new TimeField("prior_notice_start_time", OPTIONAL),
+            new StringField("prior_notice_service_id", OPTIONAL).isReferenceTo(CALENDAR),
+            new StringField("message", OPTIONAL),
+            new StringField("pickup_message", OPTIONAL),
+            new StringField("drop_off_message", OPTIONAL),
+            new StringField("phone_number", OPTIONAL),
+            new URLField("info_url", OPTIONAL),
+            new URLField("booking_url", OPTIONAL)
+    );
+
+    public static final Table LOCATIONS = new Table("locations", Location.class, OPTIONAL,
+            new StringField("location_id", REQUIRED),
+            new StringField("stop_name", OPTIONAL),
+            new StringField("stop_desc", OPTIONAL),
+            new StringField("zone_id", OPTIONAL),
+            new URLField("stop_url", OPTIONAL)
+    );
+
+    // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#location_groupstxt-file-added
+    public static final Table LOCATION_GROUPS = new Table("location_groups", LocationGroup.class, OPTIONAL,
+            new StringField("location_group_id", REQUIRED),
+            //FIXME: location id 'isReferenceTo' stops.stop_id or id from locations.geojson. Both is not an option.
+            // Consider addressing as part of conditional checks.
+//            new StringField("location_id", OPTIONAL).isReferenceTo(STOPS),
+            new StringField("location_id", OPTIONAL),
+            new StringField("location_group_name", OPTIONAL)
+    );
+
+    // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#locationsgeojson-file-added
+    public static final Table LOCATION_META_DATA = new Table("location_meta_data", LocationMetaData.class, OPTIONAL,
+            new StringField("location_meta_data_id", REQUIRED),
+            new StringField("properties", OPTIONAL),
+            new StringField("geometry_type", OPTIONAL)
+    );
+
+    // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#locationsgeojson-file-added
+    public static final Table LOCATION_SHAPES = new Table("location_shapes", LocationShape.class, OPTIONAL,
+//        new StringField("shape_id", REQUIRED),
+            new StringField("location_id", REQUIRED).isReferenceTo(LOCATIONS),
+            new StringField("geometry_id", REQUIRED),
+            new StringField("geometry_type", REQUIRED),
+            new DoubleField("geometry_pt_lat", REQUIRED, -80, 80, 6),
+            new DoubleField("geometry_pt_lon", REQUIRED, -180, 180, 6)
+
+//        new IntegerField("shape_polygon_id", REQUIRED, -1, Integer.MAX_VALUE),
+//        new IntegerField("shape_ring_id", REQUIRED, -1, Integer.MAX_VALUE),
+//        new IntegerField("shape_line_string_id", REQUIRED,  -1, Integer.MAX_VALUE),
+//        new DoubleField("shape_pt_lat", REQUIRED, -80, 80, 6),
+//        new DoubleField("shape_pt_lon", REQUIRED, -180, 180, 6)
+//        new IntegerField("shape_pt_sequence", REQUIRED)
+//        new StringField("location_meta_data_id", REQUIRED).isReferenceTo(LOCATION_META_DATA),
+    ).withParentTable(LOCATIONS);
+
     // GTFS reference: https://developers.google.com/transit/gtfs/reference#fare_rulestxt
     public static final Table FARE_RULES = new Table("fare_rules", FareRule.class, OPTIONAL,
         new StringField("fare_id", REQUIRED).isReferenceTo(FARE_ATTRIBUTES),
@@ -317,6 +382,33 @@ public class Table {
             new ShortField("continuous_drop_off", OPTIONAL,3),
             new StringField("pickup_booking_rule_id", OPTIONAL),
             new StringField("drop_off_booking_rule_id", OPTIONAL)
+    ).withParentTable(PATTERNS);
+
+    public static final Table PATTERN_LOCATION = new Table("pattern_locations", PatternLocation.class, OPTIONAL,
+            new StringField("pattern_id", REQUIRED).isReferenceTo(PATTERNS),
+            new IntegerField("stop_sequence", REQUIRED, 0, Integer.MAX_VALUE),
+            // FIXME: Do we need an index on location_id?
+            new StringField("location_id", REQUIRED).isReferenceTo(LOCATIONS),
+            // Editor-specific fields
+            // FLEX TODO: Are all of these needed?
+            new IntegerField("drop_off_type", EDITOR, 2),
+            new IntegerField("pickup_type", EDITOR, 2),
+            new DoubleField("shape_dist_traveled", EDITOR, 0, Double.POSITIVE_INFINITY, -1),
+            new ShortField("timepoint", EDITOR, 1),
+            new ShortField("continuous_pickup", OPTIONAL,3),
+            new ShortField("continuous_drop_off", OPTIONAL,3),
+            new StringField("pickup_booking_rule_id", OPTIONAL),
+            new StringField("drop_off_booking_rule_id", OPTIONAL),
+
+            // Additional GTFS Flex location groups and locations fields
+            // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#stop_timestxt-file-extended
+            new TimeField("start_pickup_dropoff_window", OPTIONAL),
+            new TimeField("end_pickup_dropoff_window", OPTIONAL),
+            new DoubleField("mean_duration_factor", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
+            new DoubleField("mean_duration_offset", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
+            new DoubleField("safe_duration_factor", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2),
+            new DoubleField("safe_duration_offset", OPTIONAL, 0, Double.POSITIVE_INFINITY, 2)
+
     ).withParentTable(PATTERNS);
 
     public static final Table TRANSFERS = new Table("transfers", Transfer.class, OPTIONAL,
@@ -425,68 +517,6 @@ public class Table {
             new URLField("attribution_url", OPTIONAL),
             new StringField("attribution_email", OPTIONAL),
             new StringField("attribution_phone", OPTIONAL));
-
-    // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#gtfs-bookingrules
-    public static final Table BOOKING_RULES = new Table("booking_rules", BookingRule.class, OPTIONAL,
-            new StringField("booking_rule_id", REQUIRED),
-            new ShortField("booking_type", OPTIONAL, 2),
-            new IntegerField("prior_notice_duration_min", OPTIONAL),
-            new IntegerField("prior_notice_duration_max", OPTIONAL),
-            new IntegerField("prior_notice_last_day", OPTIONAL),
-            new TimeField("prior_notice_last_time", OPTIONAL),
-            new IntegerField("prior_notice_start_day", OPTIONAL),
-            new TimeField("prior_notice_start_time", OPTIONAL),
-            new StringField("prior_notice_service_id", OPTIONAL).isReferenceTo(CALENDAR),
-            new StringField("message", OPTIONAL),
-            new StringField("pickup_message", OPTIONAL),
-            new StringField("drop_off_message", OPTIONAL),
-            new StringField("phone_number", OPTIONAL),
-            new URLField("info_url", OPTIONAL),
-            new URLField("booking_url", OPTIONAL)
-    );
-
-    public static final Table LOCATIONS = new Table("locations", Location.class, OPTIONAL,
-            new StringField("location_id", REQUIRED),
-            new StringField("stop_name", OPTIONAL),
-            new StringField("stop_desc", OPTIONAL),
-            new StringField("zone_id", OPTIONAL),
-            new URLField("stop_url", OPTIONAL)
-    );
-
-    // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#location_groupstxt-file-added
-    public static final Table LOCATION_GROUPS = new Table("location_groups", LocationGroup.class, OPTIONAL,
-            new StringField("location_group_id", REQUIRED),
-            //FIXME: location id 'isReferenceTo' stops.stop_id or id from locations.geojson. Both is not an option.
-            // Consider addressing as part of conditional checks.
-//            new StringField("location_id", OPTIONAL).isReferenceTo(STOPS),
-            new StringField("location_id", OPTIONAL),
-            new StringField("location_group_name", OPTIONAL)
-    );
-
-    // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#locationsgeojson-file-added
-    public static final Table LOCATION_META_DATA = new Table("location_meta_data", LocationMetaData.class, OPTIONAL,
-        new StringField("location_meta_data_id", REQUIRED),
-        new StringField("properties", OPTIONAL),
-        new StringField("geometry_type", OPTIONAL)
-    );
-
-    // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#locationsgeojson-file-added
-    public static final Table LOCATION_SHAPES = new Table("location_shapes", LocationShape.class, OPTIONAL,
-//        new StringField("shape_id", REQUIRED),
-        new StringField("location_id", REQUIRED).isReferenceTo(LOCATIONS),
-        new StringField("geometry_id", REQUIRED),
-        new StringField("geometry_type", REQUIRED),
-        new DoubleField("geometry_pt_lat", REQUIRED, -80, 80, 6),
-        new DoubleField("geometry_pt_lon", REQUIRED, -180, 180, 6)
-
-//        new IntegerField("shape_polygon_id", REQUIRED, -1, Integer.MAX_VALUE),
-//        new IntegerField("shape_ring_id", REQUIRED, -1, Integer.MAX_VALUE),
-//        new IntegerField("shape_line_string_id", REQUIRED,  -1, Integer.MAX_VALUE),
-//        new DoubleField("shape_pt_lat", REQUIRED, -80, 80, 6),
-//        new DoubleField("shape_pt_lon", REQUIRED, -180, 180, 6)
-//        new IntegerField("shape_pt_sequence", REQUIRED)
-//        new StringField("location_meta_data_id", REQUIRED).isReferenceTo(LOCATION_META_DATA),
-    ).withParentTable(LOCATIONS);
 
     /** List of tables in order needed for checking referential integrity during load stage. */
     public static final Table[] tablesInOrder = {
