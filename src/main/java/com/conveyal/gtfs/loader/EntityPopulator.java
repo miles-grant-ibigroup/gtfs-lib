@@ -56,6 +56,15 @@ public interface EntityPopulator<T> {
         patternStop.continuous_drop_off = getIntIfPresent   (result, "continuous_drop_off", columnForName);
         patternStop.pickup_booking_rule_id = getStringIfPresent(result, "pickup_booking_rule_id", columnForName);
         patternStop.drop_off_booking_rule_id = getStringIfPresent(result, "drop_off_booking_rule_id", columnForName);
+
+        patternStop.pickup_booking_rule_id = getStringIfPresent(result, "pickup_booking_rule_id", columnForName);
+        patternStop.drop_off_booking_rule_id = getStringIfPresent(result, "drop_off_booking_rule_id", columnForName);
+        patternStop.start_pickup_dropoff_window = getIntIfPresent(result, "start_pickup_dropoff_window", columnForName);
+        patternStop.end_pickup_dropoff_window = getIntIfPresent(result, "end_pickup_dropoff_window", columnForName);
+        patternStop.mean_duration_factor = getDoubleIfPresent(result, "mean_duration_factor", columnForName);
+        patternStop.mean_duration_offset = getDoubleIfPresent(result, "mean_duration_offset", columnForName);
+        patternStop.safe_duration_factor = getDoubleIfPresent(result, "safe_duration_factor", columnForName);
+        patternStop .safe_duration_offset = getDoubleIfPresent(result, "safe_duration_offset", columnForName);
         return patternStop;
     };
 

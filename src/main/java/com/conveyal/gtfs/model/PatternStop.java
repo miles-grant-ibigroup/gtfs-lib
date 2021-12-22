@@ -30,6 +30,15 @@ public class PatternStop extends Entity {
     public String pickup_booking_rule_id;
     public String drop_off_booking_rule_id;
 
+    // Additional GTFS Flex location groups and locations fields
+    public String location_id;
+    public int start_pickup_dropoff_window = INT_MISSING;
+    public int end_pickup_dropoff_window = INT_MISSING;
+    public double mean_duration_factor = DOUBLE_MISSING;
+    public double mean_duration_offset = DOUBLE_MISSING;
+    public double safe_duration_factor = DOUBLE_MISSING;
+    public double safe_duration_offset = DOUBLE_MISSING;
+
     public PatternStop () {}
 
     /**

@@ -536,6 +536,14 @@ public class GraphQLGtfsSchema {
             .field(MapFetcher.field("timepoint", GraphQLInt))
             .field(MapFetcher.field("pickup_booking_rule_id"))
             .field(MapFetcher.field("drop_off_booking_rule_id"))
+
+            // Additional GTFS Flex location groups and locations fields
+            .field(MapFetcher.field("start_pickup_dropoff_window", GraphQLInt))
+            .field(MapFetcher.field("end_pickup_dropoff_window", GraphQLInt))
+            .field(MapFetcher.field("mean_duration_factor", GraphQLFloat))
+            .field(MapFetcher.field("mean_duration_offset", GraphQLFloat))
+            .field(MapFetcher.field("safe_duration_factor", GraphQLFloat))
+            .field(MapFetcher.field("safe_duration_offset", GraphQLFloat))
         // FIXME: This will only returns a list with one stop entity (unless there is a referential integrity issue)
             // Should this be modified to be an object, rather than a list?
             .field(newFieldDefinition()
