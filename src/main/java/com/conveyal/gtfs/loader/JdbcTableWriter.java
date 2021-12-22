@@ -715,6 +715,7 @@ public class JdbcTableWriter implements TableWriter {
      * @throws SQLException
      */
     private int updateStopTimesForPatternStop(ObjectNode patternStop, int previousTravelTime) throws SQLException {
+        // FLEX TODO: change behavior if stop time is a location
         String sql = String.format(
             "update %s.stop_times st set arrival_time = ?, departure_time = ? from %s.trips t " +
                 "where st.trip_id = t.trip_id AND t.pattern_id = ? AND st.stop_sequence = ?",
@@ -752,6 +753,7 @@ public class JdbcTableWriter implements TableWriter {
      * TODO? add param Set<String> serviceIdFilters service_id values to filter trips on
      */
     private int updateStopTimesForPatternStops(List<PatternStop> patternStops) throws SQLException {
+        // FLEX TODO: handle case where patternStops are locations instead of stops
         PatternStop firstPatternStop = patternStops.iterator().next();
         int firstStopSequence = firstPatternStop.stop_sequence;
         // Prepare SQL query to determine the time that should form the basis for adding the travel time values.
