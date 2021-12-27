@@ -19,6 +19,7 @@ import com.conveyal.gtfs.model.FareAttribute;
 import com.conveyal.gtfs.model.FareRule;
 import com.conveyal.gtfs.model.FeedInfo;
 import com.conveyal.gtfs.model.Frequency;
+import com.conveyal.gtfs.model.Location;
 import com.conveyal.gtfs.model.LocationGroup;
 import com.conveyal.gtfs.model.LocationMetaData;
 import com.conveyal.gtfs.model.LocationShape;
@@ -35,7 +36,7 @@ import com.conveyal.gtfs.model.Translation;
 import com.conveyal.gtfs.model.Trip;
 import com.conveyal.gtfs.storage.StorageException;
 import com.conveyal.gtfs.util.GeoJsonException;
-import com.conveyal.gtfs.util.GeoJsonUtil;
+//import com.conveyal.gtfs.util.GeoJsonUtil;
 import com.csvreader.CsvReader;
 import org.apache.commons.io.input.BOMInputStream;
 import org.slf4j.Logger;
@@ -517,7 +518,6 @@ public class Table {
             new StringField("attribution_email", OPTIONAL),
             new StringField("attribution_phone", OPTIONAL));
 
-
     /** List of tables in order needed for checking referential integrity during load stage. */
     public static final Table[] tablesInOrder = {
         AGENCY,
@@ -541,7 +541,8 @@ public class Table {
         BOOKING_RULES,
         LOCATION_GROUPS,
         LOCATION_META_DATA,
-        LOCATION_SHAPES
+        LOCATION_SHAPES,
+        LOCATIONS,
     };
 
     /**
@@ -759,15 +760,15 @@ public class Table {
         ZipEntry entry
     ) throws IOException, GeoJsonException {
         CsvReader csvReader;
-        if (tableFileName.equals(locationGeoJsonFileName)) {
-            csvReader = GeoJsonUtil.getCsvReaderFromGeoJson(name, zipFile, entry);
-        } else {
+//        if (tableFileName.equals(locationGeoJsonFileName)) {
+////            csvReader = GeoJsonUtil.getCsvReaderFromGeoJson(name, zipFile, entry);
+//        } else {
             InputStream zipInputStream = zipFile.getInputStream(entry);
             // Skip any byte order mark that may be present. Files must be UTF-8,
             // but the GTFS spec says that "files that include the UTF byte order mark are acceptable".
             InputStream bomInputStream = new BOMInputStream(zipInputStream);
             csvReader = new CsvReader(bomInputStream, ',', StandardCharsets.UTF_8);
-        }
+//        }
         return csvReader;
     }
 
