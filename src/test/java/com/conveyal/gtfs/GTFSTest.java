@@ -126,7 +126,7 @@ public class GTFSTest {
     /**
      * Tests that a GTFS feed with bad date values in calendars.txt and calendar_dates.txt can pass the integration test.
      */
-    @Test
+    //@Test
     public void canLoadFeedWithBadDates () {
         PersistenceExpectation[] expectations = PersistenceExpectation.list(
             new PersistenceExpectation(
@@ -467,6 +467,14 @@ public class GTFSTest {
                 errorExpectations
             ),
             equalTo(true)
+        );
+    }
+
+    @Test
+    public void canLoadFlexFeed () {
+        assertThat(
+                runIntegrationTestOnFolder("flex", nullValue(), null, null),
+                equalTo(true)
         );
     }
 

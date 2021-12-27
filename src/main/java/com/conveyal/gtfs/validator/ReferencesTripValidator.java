@@ -38,6 +38,9 @@ public class ReferencesTripValidator extends TripValidator {
         if (trip != null) referencedTrips.add(trip.trip_id);
         if (route != null) referencedRoutes.add(route.route_id);
         for (Stop stop : stops) {
+            if (stop == null) {
+                continue;
+            }
             referencedStops.add(stop.stop_id);
             // If a stop used by the trip has a parent station, count this among the referenced stops, too. While the
             // parent station may not be referenced directly, the relationship is functioning correctly and there is

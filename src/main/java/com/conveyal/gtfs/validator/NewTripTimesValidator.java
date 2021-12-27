@@ -3,6 +3,7 @@ package com.conveyal.gtfs.validator;
 import com.conveyal.gtfs.error.SQLErrorStorage;
 import com.conveyal.gtfs.loader.Feed;
 import com.conveyal.gtfs.model.Entity;
+import com.conveyal.gtfs.model.LocationMetaData;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.StopTime;
@@ -38,6 +39,7 @@ public class NewTripTimesValidator extends FeedValidator {
     // TODO build this same kind of caching into the table reader class.
 //    ListMultimap<String, ShapePoint> shapeById = MultimapBuilder.treeKeys().arrayListValues().build();
     Map<String, Stop> stopById = new HashMap<>();
+    Map<String, LocationMetaData> locationById = new HashMap<String, LocationMetaData>();
     Map<String, Trip> tripById = new HashMap<>();
     Map<String, Route> routeById = new HashMap<>();
 
@@ -63,6 +65,7 @@ public class NewTripTimesValidator extends FeedValidator {
         // FIXME: determine a good way to validate shapes without caching them all in memory...
 //        for (ShapePoint shape : feed.shapePoints.getAllOrdered()) shapeById.put(shape.shape_id, shape);
         for (Trip trip: feed.trips) tripById.put(trip.trip_id, trip);
+        for (LocationMetaData location: feed.locationMetaData) locationById.put(location.location_meta_data_id, location);
         for (Route route: feed.routes) routeById.put(route.route_id, route);
         LOG.info("Done.");
         // Accumulate StopTimes with the same trip_id into a list, then process each trip separately.
@@ -158,8 +161,14 @@ public class NewTripTimesValidator extends FeedValidator {
             }
             Stop stop = stopById.get(stopTime.stop_id);
             if (stop == null) {
-                // All bad references should have been recorded at import, we can just remove them from the trips.
-                it.remove();
+                LocationMetaData location = locationById.get(stopTime.stop_id);
+                if (location == null) {
+                    // FLEX TODO: this should not be happening anymore for locations starting when locations are imported correctly. and then everything should work.
+                    // All bad references should have been recorded at import, we can just remove them from the trips.
+                    it.remove();
+                } else {
+                    stops.add(null);
+                }
             } else {
                 stops.add(stop);
             }

@@ -52,6 +52,9 @@ public class SpeedTripValidator extends TripValidator {
                 // stop_time allows neither pickup or drop off and is not a timepoint, so it serves no purpose.
                 registerError(currStopTime, NewGTFSErrorType.STOP_TIME_UNUSED);
             }
+            if (stops.get(i) == null) {
+                continue;
+            }
             Stop currStop = stops.get(i);
             // Distance is accumulated in case times are not provided for some StopTimes.
             distanceMeters += fastDistance(currStop.stop_lat, currStop.stop_lon, prevStop.stop_lat, prevStop.stop_lon);

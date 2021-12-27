@@ -7,6 +7,7 @@ import com.conveyal.gtfs.loader.BatchTracker;
 import com.conveyal.gtfs.loader.Feed;
 import com.conveyal.gtfs.loader.Requirement;
 import com.conveyal.gtfs.loader.Table;
+import com.conveyal.gtfs.model.Location;
 import com.conveyal.gtfs.model.Pattern;
 import com.conveyal.gtfs.model.PatternStop;
 import com.conveyal.gtfs.model.Route;
@@ -69,8 +70,12 @@ public class PatternFinderValidator extends TripValidator {
         LOG.info("Finding patterns...");
         // FIXME: There may be a better way to handle getting the full list of stops
         Map<String, Stop> stopById = new HashMap<>();
+        Map<String, Location> locationById = new HashMap<>();
         for (Stop stop : feed.stops) {
             stopById.put(stop.stop_id, stop);
+        }
+        for (Location location : feed.locations) {
+            locationById.put(location.location_id, location);
         }
         // FIXME In the editor we need patterns to exist separately from and before trips themselves, so me make another table.
         Map<TripPatternKey, Pattern> patterns = patternFinder.createPatternObjects(stopById, errorStorage);

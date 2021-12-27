@@ -37,6 +37,7 @@ import com.conveyal.gtfs.model.Trip;
 import com.conveyal.gtfs.storage.StorageException;
 import com.conveyal.gtfs.util.GeoJsonException;
 //import com.conveyal.gtfs.util.GeoJsonUtil;
+import com.conveyal.gtfs.util.GeoJsonUtil;
 import com.csvreader.CsvReader;
 import org.apache.commons.io.input.BOMInputStream;
 import org.slf4j.Logger;
@@ -330,19 +331,19 @@ public class Table {
 
     // https://github.com/MobilityData/gtfs-flex/blob/master/spec/reference.md#locationsgeojson-file-added
     public static final Table LOCATION_SHAPES = new Table("location_shapes", LocationShape.class, OPTIONAL,
-//        new StringField("shape_id", REQUIRED),
+        new StringField("shape_id", REQUIRED),
             new StringField("location_id", REQUIRED).isReferenceTo(LOCATIONS),
-            new StringField("geometry_id", REQUIRED),
-            new StringField("geometry_type", REQUIRED),
-            new DoubleField("geometry_pt_lat", REQUIRED, -80, 80, 6),
-            new DoubleField("geometry_pt_lon", REQUIRED, -180, 180, 6)
+//            new StringField("geometry_id", REQUIRED),
+//            new StringField("geometry_type", REQUIRED),
+//            new DoubleField("geometry_pt_lat", REQUIRED, -80, 80, 6),
+//            new DoubleField("geometry_pt_lon", REQUIRED, -180, 180, 6)
 
-//        new IntegerField("shape_polygon_id", REQUIRED, -1, Integer.MAX_VALUE),
-//        new IntegerField("shape_ring_id", REQUIRED, -1, Integer.MAX_VALUE),
-//        new IntegerField("shape_line_string_id", REQUIRED,  -1, Integer.MAX_VALUE),
-//        new DoubleField("shape_pt_lat", REQUIRED, -80, 80, 6),
-//        new DoubleField("shape_pt_lon", REQUIRED, -180, 180, 6)
-//        new IntegerField("shape_pt_sequence", REQUIRED)
+        new IntegerField("shape_polygon_id", REQUIRED, -1, Integer.MAX_VALUE),
+        new IntegerField("shape_ring_id", REQUIRED, -1, Integer.MAX_VALUE),
+        new IntegerField("shape_line_string_id", REQUIRED,  -1, Integer.MAX_VALUE),
+        new DoubleField("shape_pt_lat", REQUIRED, -80, 80, 6),
+        new DoubleField("shape_pt_lon", REQUIRED, -180, 180, 6),
+        new IntegerField("shape_pt_sequence", REQUIRED)
 //        new StringField("location_meta_data_id", REQUIRED).isReferenceTo(LOCATION_META_DATA),
     ).withParentTable(LOCATIONS);
 
@@ -760,15 +761,15 @@ public class Table {
         ZipEntry entry
     ) throws IOException, GeoJsonException {
         CsvReader csvReader;
-//        if (tableFileName.equals(locationGeoJsonFileName)) {
-////            csvReader = GeoJsonUtil.getCsvReaderFromGeoJson(name, zipFile, entry);
-//        } else {
+        if (tableFileName.equals(locationGeoJsonFileName)) {
+            csvReader = GeoJsonUtil.getCsvReaderFromGeoJson(name, zipFile, entry);
+        } else {
             InputStream zipInputStream = zipFile.getInputStream(entry);
             // Skip any byte order mark that may be present. Files must be UTF-8,
             // but the GTFS spec says that "files that include the UTF byte order mark are acceptable".
             InputStream bomInputStream = new BOMInputStream(zipInputStream);
             csvReader = new CsvReader(bomInputStream, ',', StandardCharsets.UTF_8);
-//        }
+        }
         return csvReader;
     }
 
