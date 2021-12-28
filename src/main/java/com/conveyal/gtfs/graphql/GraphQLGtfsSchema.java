@@ -487,7 +487,7 @@ public class GraphQLGtfsSchema {
                     .argument(stringArg("namespace"))
                     .dataFetcher(new NestedJDBCFetcher(
                             new JDBCFetcher("pattern_stops", "stop_id", null, false),
-                            new JDBCFetcher("pattern_locations", "stop_id", null, false),
+                            new JDBCFetcher("pattern_locations", "location_id", null, false),
                             new JDBCFetcher("patterns", "pattern_id")))
                     .build())
             .field(newFieldDefinition()
@@ -499,7 +499,7 @@ public class GraphQLGtfsSchema {
                     .argument(intArg(LIMIT_ARG))
                     .dataFetcher(new NestedJDBCFetcher(
                             new JDBCFetcher("pattern_stops", "stop_id", null, false),
-                            new JDBCFetcher("pattern_locations", "stop_id", null, false),
+                            new JDBCFetcher("pattern_locations", "location_id", null, false),
                             new JDBCFetcher("patterns", "pattern_id", null, false),
                             new JDBCFetcher("routes", "route_id")))
                     .build())
