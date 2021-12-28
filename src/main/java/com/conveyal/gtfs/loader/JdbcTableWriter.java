@@ -622,7 +622,7 @@ public class JdbcTableWriter implements TableWriter {
                 insertStatement = createPreparedUpdate(id, true, subEntity, subTable, connection, true);
             }
             // Update linked stop times fields for each updated pattern stop (e.g., timepoint, pickup/drop off type).
-            if ("pattern_stops".equals(subTable.name)) {
+            if ("pattern_stops".equals(subTable.name) || "pattern_locations".equals(subTable.name)) {
                 if (referencedPatternUsesFrequencies) {
                     // Update stop times linked to pattern stop if the pattern uses frequencies and accumulate time.
                     // Default travel and dwell time behave as "linked fields" for associated stop times. In other
@@ -651,7 +651,7 @@ public class JdbcTableWriter implements TableWriter {
                 int orderValue = subEntity.get(orderFieldName).asInt();
                 boolean orderIsUnique = orderValues.add(orderValue);
                 boolean valuesAreIncrementing = ++previousOrder == orderValue;
-                if (!orderIsUnique || !valuesAreIncrementing) {
+                if (!orderIsUnique || (!valuesAreIncrementing && !"pattern_locations".equals(subTable.name))) {
                     throw new SQLException(
                             String.format(
                                     "%s %s values must be zero-based, unique, and incrementing. Entity at index %d had %s value of %d",
