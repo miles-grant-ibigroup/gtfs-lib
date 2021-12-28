@@ -9,6 +9,7 @@ import com.conveyal.gtfs.loader.Requirement;
 import com.conveyal.gtfs.loader.Table;
 import com.conveyal.gtfs.model.Location;
 import com.conveyal.gtfs.model.Pattern;
+import com.conveyal.gtfs.model.PatternLocation;
 import com.conveyal.gtfs.model.PatternStop;
 import com.conveyal.gtfs.model.Route;
 import com.conveyal.gtfs.model.Stop;
@@ -84,12 +85,13 @@ public class PatternFinderValidator extends TripValidator {
             // TODO this assumes gtfs-lib is using an SQL database and not a MapDB.
             //   Maybe we should just create patterns in a separate step, but that would mean iterating over the
             //   stop_times twice.
-            LOG.info("Creating pattern and pattern stops tables.");
+            LOG.info("Creating pattern and pattern stops and pattern locations tables.");
             connection = feed.getConnection();
             Statement statement = connection.createStatement();
             String tripsTableName = feed.tablePrefix + "trips";
             String patternsTableName = feed.tablePrefix + "patterns";
             String patternStopsTableName = feed.tablePrefix + "pattern_stops";
+            String patternLocationsTableName = feed.tablePrefix + "pattern_locations";
             statement.execute(String.format("alter table %s add column pattern_id varchar", tripsTableName));
             // FIXME: Here we're creating a pattern table that has an integer ID field (similar to the other GTFS tables)
             //   AND a varchar pattern_id with essentially the same value cast to a string. Perhaps the pattern ID should
@@ -97,18 +99,24 @@ public class PatternFinderValidator extends TripValidator {
             Table patternsTable = new Table(patternsTableName, Pattern.class, Requirement.EDITOR, Table.PATTERNS.fields);
             Table patternStopsTable = new Table(patternStopsTableName, PatternStop.class, Requirement.EDITOR,
                     Table.PATTERN_STOP.fields);
+            Table patternLocationsTable = new Table(patternLocationsTableName, PatternLocation.class, Requirement.EDITOR,
+                    Table.PATTERN_LOCATION.fields);
             // Create pattern and pattern stops table, each with serial ID fields.
             patternsTable.createSqlTable(connection, null, true);
             patternStopsTable.createSqlTable(connection, null, true);
+            patternLocationsTable.createSqlTable(connection, null, true);
             // Generate prepared statements for inserts.
             String insertPatternSql = patternsTable.generateInsertSql(true);
             String insertPatternStopSql = patternStopsTable.generateInsertSql(true);
+            String insertPatternLocationSql = patternLocationsTable.generateInsertSql(true);
             PreparedStatement insertPatternStatement = connection.prepareStatement(insertPatternSql);
             BatchTracker patternTracker = new BatchTracker("pattern", insertPatternStatement);
             PreparedStatement insertPatternStopStatement = connection.prepareStatement(insertPatternStopSql);
             BatchTracker patternStopTracker = new BatchTracker("pattern stop", insertPatternStopStatement);
+            PreparedStatement insertPatternLocationStatement = connection.prepareStatement(insertPatternLocationSql);
+            BatchTracker patternLocationTracker = new BatchTracker("pattern location", insertPatternLocationStatement);
             int currentPatternIndex = 0;
-            LOG.info("Storing patterns and pattern stops");
+            LOG.info("Storing patterns and pattern stops and pattern locations");
             // If using Postgres, load pattern to trips mapping into temp table for quick updating.
             boolean postgresText = (connection.getMetaData().getDatabaseProductName().equals("PostgreSQL"));
             if (postgresText) {
@@ -134,40 +142,67 @@ public class PatternFinderValidator extends TripValidator {
                 int lastValidDeparture = key.departureTimes.get(0);
                 for (int i = 0; i < key.stops.size(); i++) {
                     int travelTime = 0;
+                    // can also be a location ID
                     String stopId = key.stops.get(i);
-                    int arrival = key.arrivalTimes.get(i);
-                    if (i > 0) {
-                        int prevDeparture = key.departureTimes.get(i - 1);
-                        // Set travel time for all stops except the first.
-                        if (prevDeparture != INT_MISSING) {
-                            // Update the previous departure if it's not missing. Otherwise, base travel time based on the
-                            // most recent valid departure.
-                            lastValidDeparture = prevDeparture;
+                    if (stopById.containsKey(stopId)) {
+                        int arrival = key.arrivalTimes.get(i);
+                        if (i > 0) {
+                            int prevDeparture = key.departureTimes.get(i - 1);
+                            // Set travel time for all stops except the first.
+                            if (prevDeparture != INT_MISSING) {
+                                // Update the previous departure if it's not missing. Otherwise, base travel time based on the
+                                // most recent valid departure.
+                                lastValidDeparture = prevDeparture;
+                            }
+                            travelTime = arrival == INT_MISSING || lastValidDeparture == INT_MISSING
+                                    ? INT_MISSING
+                                    : arrival - lastValidDeparture;
                         }
-                        travelTime = arrival == INT_MISSING || lastValidDeparture == INT_MISSING
-                            ? INT_MISSING
-                            : arrival - lastValidDeparture;
-                    }
-                    int departure = key.departureTimes.get(i);
-                    int dwellTime = arrival == INT_MISSING || departure == INT_MISSING
-                        ? INT_MISSING
-                        : departure - arrival;
+                        int departure = key.departureTimes.get(i);
+                        int dwellTime = arrival == INT_MISSING || departure == INT_MISSING
+                                ? INT_MISSING
+                                : departure - arrival;
 
-                    insertPatternStopStatement.setString(1, pattern.pattern_id);
-                    // Stop sequence is zero-based.
-                    setIntParameter(insertPatternStopStatement, 2, i);
-                    insertPatternStopStatement.setString(3, stopId);
-                    setIntParameter(insertPatternStopStatement,4, travelTime);
-                    setIntParameter(insertPatternStopStatement,5, dwellTime);
-                    setIntParameter(insertPatternStopStatement,6, key.dropoffTypes.get(i));
-                    setIntParameter(insertPatternStopStatement,7, key.pickupTypes.get(i));
-                    setDoubleParameter(insertPatternStopStatement, 8, key.shapeDistances.get(i));
-                    setIntParameter(insertPatternStopStatement,9, key.timepoints.get(i));
-                    setIntParameter(insertPatternStopStatement,10, key.continuous_pickup.get(i));
-                    setIntParameter(insertPatternStopStatement,11, key.continuous_drop_off.get(i));
-                    insertPatternStopStatement.setString(12, key.pickup_booking_rule_id.get(i));
-                    insertPatternStopStatement.setString(13, key.drop_off_booking_rule_id.get(i));
-                    patternStopTracker.addBatch();
+                        insertPatternStopStatement.setString(1, pattern.pattern_id);
+                        // Stop sequence is zero-based.
+                        setIntParameter(insertPatternStopStatement, 2, i);
+                        insertPatternStopStatement.setString(3, stopId);
+                        setIntParameter(insertPatternStopStatement, 4, travelTime);
+                        setIntParameter(insertPatternStopStatement, 5, dwellTime);
+                        setIntParameter(insertPatternStopStatement, 6, key.dropoffTypes.get(i));
+                        setIntParameter(insertPatternStopStatement, 7, key.pickupTypes.get(i));
+                        setDoubleParameter(insertPatternStopStatement, 8, key.shapeDistances.get(i));
+                        setIntParameter(insertPatternStopStatement, 9, key.timepoints.get(i));
+                        setIntParameter(insertPatternStopStatement, 10, key.continuous_pickup.get(i));
+                        setIntParameter(insertPatternStopStatement, 11, key.continuous_drop_off.get(i));
+                        insertPatternStopStatement.setString(12, key.pickup_booking_rule_id.get(i));
+                        insertPatternStopStatement.setString(13, key.drop_off_booking_rule_id.get(i));
+                        patternStopTracker.addBatch();
+                    }
+                    else {
+                        // create pattern location
+                        insertPatternLocationStatement.setString(1, pattern.pattern_id);
+                        // Stop sequence is zero-based.
+                        setIntParameter(insertPatternLocationStatement, 2, i);
+                        insertPatternLocationStatement.setString(3, stopId); // is actually location id
+                        setDoubleParameter(insertPatternLocationStatement, 4, key.shapeDistances.get(i));
+                        setIntParameter(insertPatternLocationStatement, 5, key.pickupTypes.get(i));
+                        setIntParameter(insertPatternLocationStatement, 6, key.dropoffTypes.get(i));
+                        setIntParameter(insertPatternLocationStatement, 7, key.timepoints.get(i));
+                        setIntParameter(insertPatternLocationStatement, 8, key.continuous_pickup.get(i));
+                        setIntParameter(insertPatternLocationStatement, 9, key.continuous_drop_off.get(i));
+                        insertPatternLocationStatement.setString(10, key.pickup_booking_rule_id.get(i));
+                        insertPatternLocationStatement.setString(11, key.drop_off_booking_rule_id.get(i));
+
+                        // the new fancy ones
+                        setIntParameter(insertPatternLocationStatement, 12, 55);
+                        setIntParameter(insertPatternLocationStatement, 13, 55);
+                        setDoubleParameter(insertPatternLocationStatement, 14, 66.0);
+                        setDoubleParameter(insertPatternLocationStatement, 15, 44.0);
+                        setDoubleParameter(insertPatternLocationStatement, 16, 44.0);
+                        setDoubleParameter(insertPatternLocationStatement, 17, 44.0);
+                        patternLocationTracker.addBatch();
+                    }
                 }
                 // Finally, update all trips on this pattern to reference this pattern's ID.
                 String questionMarks = String.join(", ", Collections.nCopies(pattern.associatedTrips.size(), "?"));
@@ -199,7 +234,8 @@ public class PatternFinderValidator extends TripValidator {
             // Send any remaining prepared statement calls to the database backend.
             patternTracker.executeRemaining();
             patternStopTracker.executeRemaining();
-            LOG.info("Done storing patterns and pattern stops.");
+            patternLocationTracker.executeRemaining();
+            LOG.info("Done storing patterns and pattern stops and pattern locations.");
             if (postgresText) {
                 // Finally, copy the pattern for trips text file into a table, create an index on trip IDs, and update
                 // the trips table.
@@ -223,6 +259,8 @@ public class PatternFinderValidator extends TripValidator {
             statement.executeUpdate(String.format("alter table %s add primary key (pattern_id)", patternsTableName));
             LOG.info("Creating index on pattern stops");
             statement.executeUpdate(String.format("alter table %s add primary key (pattern_id, stop_sequence)", patternStopsTableName));
+            LOG.info("Creating index on pattern locations");
+            statement.executeUpdate(String.format("alter table %s add primary key (pattern_id, stop_sequence)", patternLocationsTableName));
             // Index new pattern_id column on trips. The other tables are already indexed because they have primary keys.
             LOG.info("Indexing trips on pattern id.");
             statement.execute(String.format("create index trips_pattern_id_idx on %s (pattern_id)", tripsTableName));
