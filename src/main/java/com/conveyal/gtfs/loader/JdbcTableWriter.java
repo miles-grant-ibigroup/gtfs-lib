@@ -651,7 +651,8 @@ public class JdbcTableWriter implements TableWriter {
                 int orderValue = subEntity.get(orderFieldName).asInt();
                 boolean orderIsUnique = orderValues.add(orderValue);
                 boolean valuesAreIncrementing = ++previousOrder == orderValue;
-                if (!orderIsUnique || (!valuesAreIncrementing && !"pattern_locations".equals(subTable.name))) {
+                // FLEX TODO: this needs to be better
+                if (!orderIsUnique || (!valuesAreIncrementing && !"pattern_locations".equals(subTable.name) && !"pattern_stops".equals(subTable.name))) {
                     throw new SQLException(
                             String.format(
                                     "%s %s values must be zero-based, unique, and incrementing. Entity at index %d had %s value of %d",
